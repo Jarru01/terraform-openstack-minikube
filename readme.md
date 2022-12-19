@@ -4,7 +4,6 @@ locals.tf               -subor sluzi na vytvorenie premennych pre parametre ktor
 providers.tf            -definuje cloud providerov s ktorymi interagujeme a potrebne parametre
 main.tf                 -obsahuje konfiguraciu objektov ktore sa maju vytvorit
 variables.tf            -podobne ako locals.tf sluzi na ukladanie casto pouzivanych parametrov do premennych. 
-terraform.auto.tfvars   -automaticky naplna zadeinovane premenne v subore variables.tf.
 
 Na aplikovanie konfiguracie na openstack server je najprv potrebne inicializovat terraform pomocou prikazu terraform init.
 Nasledne je vhodne pouzit prikaz terraform plan, na skontrolovanie objektov ktore budu v openstacku nakonfigurovane. 
