@@ -1,4 +1,4 @@
-# Repozitar obsahuje terraform scripty, sluziace primarne na vytvorenie instancie ubuntu VM, vytvorenie minikube clustera s 3 nodami na ubuntu VM a povolenie sietovej prevadzky na ubuntu vm.
+# Repozitar obsahuje terraform scripty, sluziace primarne na vytvorenie instancie ubuntu VM, vytvorenie minikube clustera s 3 nodami na ubuntu VM a povolenie sietovej prevadzky na ubuntu VM.
 
 locals.tf               - subor sluzi na vytvorenie premennych pre parametre ktore v programe casto vyuzivame, vdaka comu ich je mozne potom zmenit na jednom mieste<br />
 providers.tf            - definuje cloud providerov s ktorymi interagujeme a potrebne parametre<br />
