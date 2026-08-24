@@ -1,9 +1,4 @@
-pkg/
-Gemfile.lock
-vendor/
-spec/fixtures/
-.bundle/
-coverage/
+### IDE / editors
 .idea/
 *.iml
 *.log
@@ -11,8 +6,8 @@ coverage/
 ### SSH
 *.pem
 
-### Vagrant
-.vagrant/
+### Binaries
+*.exe
 
 ### Terraform
 *.tfvars
