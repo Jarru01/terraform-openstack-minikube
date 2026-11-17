@@ -10,24 +10,6 @@ checksum-verified versions.
 
 A second project reuses the same module for a plain Docker host.
 
-```mermaid
-flowchart LR
-  you([You]) -- "SSH from admin_cidrs only" --> fip
-  subgraph OpenStack project
-    fip[Floating IP<br/>optional] --> port[Neutron port<br/>+ security group]
-    port --> vm
-    subgraph vm[Ubuntu VM]
-      docker[Docker Engine]
-      subgraph mk[minikube, driver=docker]
-        n1[node 1<br/>control plane]
-        n2[node 2]
-        n3[node 3]
-      end
-      docker --> mk
-    end
-  end
-```
-
 ## Repository layout
 
 ```text
@@ -61,6 +43,8 @@ terraform apply
 # 4. Wait for provisioning and check the cluster
 $(terraform output -raw ssh_command) 'cloud-init status --wait && kubectl get nodes'
 ```
+
+Example output (illustrative, with the default 3 nodes):
 
 ```text
 NAME           STATUS   ROLES           AGE   VERSION
