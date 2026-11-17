@@ -14,4 +14,10 @@ terraform {
 }
 
 # Talks to the local LXD daemon over its unix socket; no credentials needed.
-provider "lxd" {}
+# (Image remotes such as "ubuntu:" are built in and need no remote block.)
+provider "lxd" {
+  remote {
+    name    = "local"
+    address = "unix://"
+  }
+}
