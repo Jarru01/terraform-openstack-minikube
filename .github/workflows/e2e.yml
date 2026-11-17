@@ -52,18 +52,19 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
-      - name: terraform apply (waits until every node is Ready)
+      - name: terraform apply
         run: |
           terraform init -input=false -lockfile=readonly
           terraform apply -auto-approve -input=false
 
-      - name: Cluster
+      - name: Wait for provisioning; every node must be Ready
         run: |
-          terraform output -raw nodes
+          set -o pipefail # so a failing check is not masked by tee
+          ./wait-ready.sh minikube-lxd 3 | tee wait-ready.log
           {
             echo '### minikube on LXD'
             echo '```text'
-            terraform output -raw nodes
+            cat wait-ready.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

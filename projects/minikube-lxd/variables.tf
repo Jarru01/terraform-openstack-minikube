@@ -36,12 +36,6 @@ variable "storage_pool" {
   default     = "default"
 }
 
-variable "ready_timeout" {
-  description = "How long apply waits for provisioning and for every node to be Ready."
-  type        = string
-  default     = "45m"
-}
-
 # --- The cluster (passed to modules/cloud-init, which validates them) -----------
 
 variable "minikube_version" {

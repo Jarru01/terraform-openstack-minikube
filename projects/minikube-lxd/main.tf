@@ -1,7 +1,9 @@
 # Local variant: the same cloud-init provisioning as projects/minikube, but on
-# an LXD virtual machine instead of an OpenStack instance. `terraform apply`
-# only succeeds once provisioning has finished and every node reports Ready,
-# so a successful apply is an end-to-end test of the cloud-init scripts.
+# an LXD virtual machine instead of an OpenStack instance.
+#
+# `terraform apply` returns once the VM is up and its LXD agent responds;
+# provisioning continues inside the VM. `./wait-ready.sh` then waits for
+# cloud-init and checks that every minikube node is Ready (CI does the same).
 
 module "cloud_init" {
   source = "../../modules/cloud-init"
@@ -12,11 +14,6 @@ module "cloud_init" {
   node_count         = var.node_count
   cpus_per_node      = var.cpus_per_node
   memory_per_node_mb = var.memory_per_node_mb
-}
-
-locals {
-  # Run as the login user, whose kubeconfig minikube wrote.
-  as_ubuntu = ["runuser", "-l", "ubuntu", "-c"]
 }
 
 resource "lxd_instance" "this" {
@@ -40,32 +37,11 @@ resource "lxd_instance" "this" {
     }
   }
 
-  # Commands run through the LXD agent once the VM is up, in key order.
   wait_for {
     type = "agent"
   }
 
-  execs = {
-    "10-wait-for-cloud-init" = {
-      # Exit code 1 means cloud-init failed; 2 ("degraded") only flags
-      # warnings, so the node check below is the real gate.
-      command       = ["/bin/sh", "-c", "cloud-init status --wait --long; rc=$?; [ $rc -ne 1 ]"]
-      fail_on_error = true
-    }
-    "20-nodes-ready" = {
-      command = concat(local.as_ubuntu, [join(" && ", [
-        "kubectl wait --for=condition=Ready nodes --all --timeout=10m",
-        "test \"$(kubectl get nodes --no-headers | wc -l)\" -eq ${var.node_count}",
-      ])])
-      fail_on_error = true
-    }
-    "30-get-nodes" = {
-      command       = concat(local.as_ubuntu, ["kubectl get nodes -o wide"])
-      record_output = true
-    }
-  }
-
   timeouts = {
-    create = var.ready_timeout
+    create = "10m"
   }
 }

@@ -3,9 +3,9 @@ output "ipv4_address" {
   value       = lxd_instance.this.ipv4_address
 }
 
-output "nodes" {
-  description = "`kubectl get nodes -o wide`, captured right after the cluster became Ready."
-  value       = lxd_instance.this.execs["30-get-nodes"].stdout
+output "wait_command" {
+  description = "Wait for provisioning and check that every node is Ready."
+  value       = "./wait-ready.sh ${lxd_instance.this.name} ${var.node_count}"
 }
 
 output "shell" {

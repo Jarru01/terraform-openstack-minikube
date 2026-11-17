@@ -101,4 +101,4 @@ jobs:
       - name: bash -n
         run: for f in rendered/*.sh; do bash -n "$f"; done
       - name: shellcheck
-        run: shellcheck --severity=warning rendered/*.sh .github/scripts/*.sh
+        run: shellcheck --severity=warning rendered/*.sh .github/scripts/*.sh projects/*/*.sh
