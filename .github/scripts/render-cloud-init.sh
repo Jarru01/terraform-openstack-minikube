@@ -5,7 +5,7 @@ set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
 out="$(mkdir -p "$1" && cd "$1" && pwd)"
-ci="$repo/cloud-init"
+ci="$repo/modules/cloud-init/scripts"
 
 render() {
   # Run the console in an empty directory so no configuration is loaded.

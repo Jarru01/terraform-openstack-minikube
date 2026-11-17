@@ -18,8 +18,6 @@ locals {
   # The lookup service answers with a trailing newline, hence chomp().
   admin_cidrs = length(var.admin_cidrs) > 0 ? var.admin_cidrs : ["${chomp(data.http.my_ip[0].response_body)}/32"]
 
-  cloud_init_dir = "${path.module}/../../cloud-init"
-
   # Read the key only if it exists, so a missing file is reported by the
   # variable validation (with a helpful message) rather than by file().
   ssh_public_key_file = pathexpand(var.ssh_public_key_path)
@@ -27,37 +25,18 @@ locals {
 }
 
 # -----------------------------------------------------------------------------
-# Provisioning: cloud-init runs the parts in filename order.
+# Provisioning: shared with the local LXD variant (projects/minikube-lxd)
 # -----------------------------------------------------------------------------
 
-data "cloudinit_config" "this" {
-  gzip          = false
-  base64_encode = false
+module "cloud_init" {
+  source = "../../modules/cloud-init"
 
-  part {
-    filename     = "10-base.sh"
-    content_type = "text/x-shellscript"
-    content      = file("${local.cloud_init_dir}/10-base.sh")
-  }
-
-  part {
-    filename     = "20-docker.sh"
-    content_type = "text/x-shellscript"
-    content      = templatefile("${local.cloud_init_dir}/20-docker.sh.tftpl", { ssh_user = var.ssh_user })
-  }
-
-  part {
-    filename     = "30-minikube.sh"
-    content_type = "text/x-shellscript"
-    content = templatefile("${local.cloud_init_dir}/30-minikube.sh.tftpl", {
-      ssh_user           = var.ssh_user
-      minikube_version   = var.minikube_version
-      kubernetes_version = var.kubernetes_version
-      node_count         = var.node_count
-      cpus_per_node      = var.cpus_per_node
-      memory_per_node_mb = var.memory_per_node_mb
-    })
-  }
+  ssh_user           = var.ssh_user
+  minikube_version   = var.minikube_version
+  kubernetes_version = var.kubernetes_version
+  node_count         = var.node_count
+  cpus_per_node      = var.cpus_per_node
+  memory_per_node_mb = var.memory_per_node_mb
 }
 
 # -----------------------------------------------------------------------------
@@ -74,7 +53,7 @@ module "vm" {
   floating_ip_pool = var.floating_ip_pool
   ssh_user         = var.ssh_user
   ssh_public_key   = local.ssh_public_key
-  user_data        = data.cloudinit_config.this.rendered
+  user_data        = module.cloud_init.user_data
 
   ingress_rules = concat(
     [for cidr in local.admin_cidrs : { description = "SSH from admin network", protocol = "tcp", port_min = 22, cidr = cidr }],

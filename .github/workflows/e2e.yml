@@ -1,0 +1,80 @@
+name: e2e
+
+# Boots an Ubuntu VM in LXD on the runner, provisions it with the same
+# cloud-init scripts the OpenStack projects use, and only passes if every
+# minikube node reports Ready. Takes ~15 minutes, so it runs when the
+# provisioning code changes, weekly, and on demand.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - modules/cloud-init/**
+      - projects/minikube-lxd/**
+      - .github/workflows/e2e.yml
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e
+  cancel-in-progress: false
+
+env:
+  TF_VERSION: 1.17.2
+
+jobs:
+  minikube-on-lxd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: projects/minikube-lxd
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check KVM (LXD virtual machines need it)
+        run: |
+          ls -l /dev/kvm
+          nproc
+          free -g
+          df -h /
+
+      - uses: canonical/setup-lxd@v1
+        with:
+          channel: latest/stable
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform apply (waits until every node is Ready)
+        run: |
+          terraform init -input=false -lockfile=readonly
+          terraform apply -auto-approve -input=false
+
+      - name: Cluster
+        run: |
+          terraform output -raw nodes
+          {
+            echo '### minikube on LXD'
+            echo '```text'
+            terraform output -raw nodes
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Diagnostics
+        if: failure()
+        run: |
+          lxc list || true
+          lxc info minikube-lxd --show-log | tail -n 40 || true
+          lxc exec minikube-lxd -- cloud-init status --long || true
+          lxc exec minikube-lxd -- tail -n 150 /var/log/cloud-init-output.log || true
+
+      - name: terraform destroy
+        if: always()
+        run: terraform destroy -auto-approve -input=false

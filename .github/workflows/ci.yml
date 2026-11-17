@@ -34,11 +34,14 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: module unit tests (mocked provider)
-        working-directory: modules/openstack-vm
+      - name: module tests
         run: |
-          terraform init -backend=false -input=false
-          terraform test
+          for dir in modules/*/; do
+            echo "::group::$dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" test
+            echo "::endgroup::"
+          done
 
   opentofu:
     name: OpenTofu validate, test
@@ -65,11 +68,14 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: module unit tests (mocked provider)
-        working-directory: modules/openstack-vm
+      - name: module tests
         run: |
-          tofu init -backend=false -input=false
-          tofu test
+          for dir in modules/*/; do
+            echo "::group::$dir"
+            tofu -chdir="$dir" init -backend=false -input=false
+            tofu -chdir="$dir" test
+            echo "::endgroup::"
+          done
 
   tflint:
     runs-on: ubuntu-latest

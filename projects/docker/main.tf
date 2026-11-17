@@ -14,8 +14,7 @@ data "http" "my_ip" {
 }
 
 locals {
-  admin_cidrs    = length(var.admin_cidrs) > 0 ? var.admin_cidrs : ["${chomp(data.http.my_ip[0].response_body)}/32"]
-  cloud_init_dir = "${path.module}/../../cloud-init"
+  admin_cidrs = length(var.admin_cidrs) > 0 ? var.admin_cidrs : ["${chomp(data.http.my_ip[0].response_body)}/32"]
 
   # Read the key only if it exists, so a missing file is reported by the
   # variable validation (with a helpful message) rather than by file().
@@ -23,21 +22,11 @@ locals {
   ssh_public_key      = fileexists(local.ssh_public_key_file) ? trimspace(file(local.ssh_public_key_file)) : ""
 }
 
-data "cloudinit_config" "this" {
-  gzip          = false
-  base64_encode = false
+module "cloud_init" {
+  source = "../../modules/cloud-init"
 
-  part {
-    filename     = "10-base.sh"
-    content_type = "text/x-shellscript"
-    content      = file("${local.cloud_init_dir}/10-base.sh")
-  }
-
-  part {
-    filename     = "20-docker.sh"
-    content_type = "text/x-shellscript"
-    content      = templatefile("${local.cloud_init_dir}/20-docker.sh.tftpl", { ssh_user = var.ssh_user })
-  }
+  ssh_user         = var.ssh_user
+  install_minikube = false
 }
 
 module "vm" {
@@ -50,7 +39,7 @@ module "vm" {
   floating_ip_pool = var.floating_ip_pool
   ssh_user         = var.ssh_user
   ssh_public_key   = local.ssh_public_key
-  user_data        = data.cloudinit_config.this.rendered
+  user_data        = module.cloud_init.user_data
 
   ingress_rules = concat(
     [for cidr in local.admin_cidrs : { description = "SSH from admin network", protocol = "tcp", port_min = 22, cidr = cidr }],
