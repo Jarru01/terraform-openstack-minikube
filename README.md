@@ -138,9 +138,10 @@ cd modules/openstack-vm && terraform init -backend=false && terraform test
 
 ## Background
 
-This started as a university cloud-computing lab on the faculty's OpenStack
-cloud, and was rebuilt as a tested Terraform project with current minikube
-and Kubernetes versions.
+This started as a university cloud-computing lab: the original 2022 version
+ran on the faculty's OpenStack cloud. It was later rebuilt as a tested
+Terraform project with current minikube and Kubernetes versions. The rebuild
+has been verified end to end on LXD, but not yet re-run on OpenStack.
 
 ## License
 
