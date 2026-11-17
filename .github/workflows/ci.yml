@@ -1,0 +1,66 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: 1.17.2
+
+jobs:
+  terraform:
+    name: fmt, validate, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: validate projects
+        run: |
+          for dir in projects/*/; do
+            echo "::group::$dir"
+            terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+
+      - name: module unit tests (mocked provider)
+        working-directory: modules/openstack-vm
+        run: |
+          terraform init -backend=false -input=false
+          terraform test
+
+  tflint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: terraform-linters/setup-tflint@v6
+      - run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - run: tflint --recursive --format compact
+
+  shell:
+    name: cloud-init scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: render templates
+        run: bash .github/scripts/render-cloud-init.sh rendered
+      - name: bash -n
+        run: for f in rendered/*.sh; do bash -n "$f"; done
+      - name: shellcheck
+        run: shellcheck --severity=warning rendered/*.sh .github/scripts/*.sh

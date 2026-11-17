@@ -1,0 +1,39 @@
+#!/bin/bash
+# Install pinned, checksum-verified kubectl and minikube, then start a
+# multi-node cluster (one Docker container per node) as the login user.
+set -euo pipefail
+
+MINIKUBE_VERSION="${minikube_version}"
+KUBERNETES_VERSION="${kubernetes_version}"
+ARCH="$(dpkg --print-architecture)" # amd64 or arm64
+
+workdir="$(mktemp -d)"
+cd "$workdir"
+
+# kubectl
+curl -fsSLO "https://dl.k8s.io/release/$KUBERNETES_VERSION/bin/linux/$ARCH/kubectl"
+curl -fsSLO "https://dl.k8s.io/release/$KUBERNETES_VERSION/bin/linux/$ARCH/kubectl.sha256"
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+install -m 0755 kubectl /usr/local/bin/kubectl
+
+# minikube
+base_url="https://github.com/kubernetes/minikube/releases/download/$MINIKUBE_VERSION"
+curl -fsSLo minikube "$base_url/minikube-linux-$ARCH"
+curl -fsSLo minikube.sha256 "$base_url/minikube-linux-$ARCH.sha256"
+echo "$(cat minikube.sha256)  minikube" | sha256sum --check
+install -m 0755 minikube /usr/local/bin/minikube
+
+cd /
+rm -rf "$workdir"
+
+# A login shell (-l) picks up the docker group membership added earlier.
+as_user() { runuser -l "${ssh_user}" -c "$1"; }
+
+as_user "minikube start \
+  --driver=docker \
+  --nodes=${node_count} \
+  --cpus=${cpus_per_node} \
+  --memory=${memory_per_node_mb}mb \
+  --kubernetes-version=$KUBERNETES_VERSION"
+as_user "minikube addons enable ingress"
+as_user "kubectl get nodes -o wide"

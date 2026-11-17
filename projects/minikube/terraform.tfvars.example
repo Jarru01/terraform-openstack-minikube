@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars and adjust to your cloud:
+#   openstack image list / openstack flavor list / openstack network list
+
+image_name   = "Ubuntu 24.04"
+flavor_name  = "m1.xlarge" # 3 nodes x 2200 MB + 1 GB => at least ~8 GB RAM
+network_name = "private"
+
+# Needed when network_name is not directly reachable from your machine:
+# floating_ip_pool = "public"
+
+# Optional; omit to allow only your current public IPv4 address:
+# admin_cidrs = ["203.0.113.0/24"]
+
+# Optional cluster shape:
+# node_count         = 3
+# cpus_per_node      = 2
+# memory_per_node_mb = 2200

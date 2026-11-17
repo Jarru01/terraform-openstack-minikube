@@ -1,0 +1,17 @@
+# Terraform / OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+crash.log
+crash.*.log
+
+# Lock files belong to root configurations (projects/*), not reusable modules
+modules/**/.terraform.lock.hcl
+
+# OpenStack credentials and keys
+clouds.yaml
+secure.yaml
+*-openrc.sh
+*.pem
