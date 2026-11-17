@@ -9,6 +9,7 @@ permissions:
 
 env:
   TF_VERSION: 1.17.2
+  TOFU_VERSION: 1.13.9
 
 jobs:
   terraform:
@@ -38,6 +39,37 @@ jobs:
         run: |
           terraform init -backend=false -input=false
           terraform test
+
+  opentofu:
+    name: OpenTofu validate, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+          tofu_wrapper: false
+
+      - name: tofu fmt
+        run: tofu fmt -check -recursive -diff
+
+      # The committed lock files pin registry.terraform.io addresses; OpenTofu
+      # resolves the same providers from its own registry and records them
+      # alongside, so the lock file is not used read-only here.
+      - name: validate projects
+        run: |
+          for dir in projects/*/; do
+            echo "::group::$dir"
+            tofu -chdir="$dir" init -backend=false -input=false
+            tofu -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+
+      - name: module unit tests (mocked provider)
+        working-directory: modules/openstack-vm
+        run: |
+          tofu init -backend=false -input=false
+          tofu test
 
   tflint:
     runs-on: ubuntu-latest

@@ -23,7 +23,7 @@ cloud-init/             provisioning scripts, run in filename order
 
 ## Quick start
 
-Requirements: Terraform ≥ 1.6 or OpenTofu, an OpenStack project, an Ubuntu
+Requirements: Terraform ≥ 1.6 or OpenTofu ≥ 1.6, an OpenStack project, an Ubuntu
 22.04/24.04 image, and an SSH key pair (`ssh-keygen -t ed25519`).
 
 ```bash
@@ -96,6 +96,7 @@ DaemonSets on a single small VM, but it is not a highly available cluster.
 |---|---|
 | `terraform fmt`, `validate` for both projects | CI |
 | Module unit tests (`terraform test`, mocked provider: rule mapping, floating IP switch, input validation) | CI and locally |
+| Same `fmt`, `validate` and unit tests with OpenTofu | CI |
 | `tflint` (recommended ruleset) | CI |
 | cloud-init templates rendered, then `bash -n` and `shellcheck` | CI |
 
