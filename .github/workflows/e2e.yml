@@ -2,16 +2,13 @@ name: e2e
 
 # Boots an Ubuntu VM in LXD on the runner, provisions it with the same
 # cloud-init scripts the OpenStack projects use, and only passes if every
-# minikube node reports Ready. Takes ~15 minutes, so it runs when the
-# provisioning code changes, weekly, and on demand.
+# minikube node reports Ready. The whole job takes about 4 minutes, so it
+# runs on every push; the weekly run catches upstream drift (package
+# updates, moved downloads) when nothing in the repo changed.
 
 on:
   push:
-    branches: [main]
-    paths:
-      - modules/cloud-init/**
-      - projects/minikube-lxd/**
-      - .github/workflows/e2e.yml
+  pull_request:
   schedule:
     - cron: "0 5 * * 1"
   workflow_dispatch:
